@@ -1,4 +1,4 @@
-// File: C:\Users\hp\Downloads\learning-academy new\learning-academy\app\signup\page.js
+// File: /home/hammad/Downloads/work/AI/Gen AI/Learning Acdemy/FinalHRLearningAcademy/Frontend/app/signup/page.js
 import * as entry from '../../../../app/signup/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

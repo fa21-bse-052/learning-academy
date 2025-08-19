@@ -1,4 +1,4 @@
-// File: C:\Users\hp\Downloads\learning-academy new\learning-academy\app\layout.js
+// File: /home/hammad/Downloads/work/AI/Gen AI/Learning Acdemy/FinalHRLearningAcademy/Frontend/app/layout.js
 import * as entry from '../../../app/layout.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
