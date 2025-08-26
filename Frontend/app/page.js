@@ -180,12 +180,6 @@ export default function WelcomePage() {
               <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </a>
             
-            <button className="group flex items-center text-white hover:text-blue-400 transition-colors">
-              <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mr-4 group-hover:bg-blue-500/30 transition-colors">
-                <Play className="w-6 h-6 ml-1" />
-              </div>
-              Watch Demo Video
-            </button>
           </div>
 
           {/* Login Options */}
@@ -271,45 +265,54 @@ export default function WelcomePage() {
       </section>
 
       {/* Popular Courses */}
-      <section id="courses" className="py-20 px-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">
-              Popular Courses
-            </h2>
-            <p className="text-xl text-gray-300">
-              Join thousands of students in our most sought-after programs
-            </p>
+<section id="courses" className="py-20 px-6">
+  <div className="max-w-6xl mx-auto">
+    <div className="text-center mb-16">
+      <h2 className="text-4xl md:text-5xl font-bold mb-6">
+        Popular Courses
+      </h2>
+      <p className="text-xl text-gray-300">
+        Join thousands of students in our most sought-after programs
+      </p>
+    </div>
+
+    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {courses.map((course, index) => (
+        <div
+          key={index}
+          className="group bg-white/5 border border-white/10 backdrop-blur-lg rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 hover:scale-105"
+        >
+          <div className="mb-4">
+            <span
+              className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                course.level === "Beginner"
+                  ? "bg-green-500/20 text-green-300"
+                  : course.level === "Intermediate"
+                  ? "bg-yellow-500/20 text-yellow-300"
+                  : "bg-red-500/20 text-red-300"
+              }`}
+            >
+              {course.level}
+            </span>
           </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {courses.map((course, index) => (
-              <div 
-                key={index}
-                className="group bg-white/5 border border-white/10 backdrop-blur-lg rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 hover:scale-105"
-              >
-                <div className="mb-4">
-                  <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
-                    course.level === 'Beginner' ? 'bg-green-500/20 text-green-300' :
-                    course.level === 'Intermediate' ? 'bg-yellow-500/20 text-yellow-300' :
-                    'bg-red-500/20 text-red-300'
-                  }`}>
-                    {course.level}
-                  </span>
-                </div>
-                <h3 className="text-xl font-bold mb-3">{course.title}</h3>
-                <div className="space-y-2 text-sm text-gray-300">
-                  <div>👥 {course.students} students</div>
-                  <div>⏱️ {course.duration}</div>
-                </div>
-                <button className="w-full mt-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all group-hover:scale-105">
-                  Enroll Now
-                </button>
-              </div>
-            ))}
+          <h3 className="text-xl font-bold mb-3">{course.title}</h3>
+          <div className="space-y-2 text-sm text-gray-300">
+            <div>👥 {course.students} students</div>
+            <div>⏱️ {course.duration}</div>
           </div>
+
+          {/* Changed button -> Link to signup */}
+          <a
+            href="/signup"
+            className="block text-center w-full mt-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all group-hover:scale-105"
+          >
+            Enroll Now
+          </a>
         </div>
-      </section>
+      ))}
+    </div>
+  </div>
+</section>
 
       {/* Testimonials */}
       <section id="testimonials" className="py-20 px-6">

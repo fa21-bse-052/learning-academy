@@ -34,6 +34,7 @@ class UserResponse(BaseModel):
 class QuizQuestion(BaseModel):
     question: str
     options: List[str]
+    answer: str
 
 from typing import Any
 

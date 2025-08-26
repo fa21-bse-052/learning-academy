@@ -9,9 +9,18 @@ logger = get_logger("services.quiz.checker")
 
 client = Groq(api_key=settings.groq_api_key)
 
-def check_quiz_answers_llm(questions: Union[List[dict], List], answers: List[str], transcript: str) -> Dict:
+def check_quiz_answers_llm(
+    questions: Union[List[dict], List],
+    user_answers: List[str],
+    correct_answers: List[str]
+) -> Dict:
+    """
+    Uses Groq LLM to evaluate quiz answers by comparing user answers with correct answers.
+    Transcript is NOT used anymore.
+    """
+
     response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
+        model="openai/gpt-oss-120b",
         messages=[
             {
                 "role": "system",
@@ -27,18 +36,18 @@ Return exactly the keys shown and NOTHING ELSE."""
             },
             {
                 "role": "user",
-                "content": f"""Evaluate the user's answers using only the transcript.
-
-Transcript:
-\"\"\"{transcript}\"\"\"
+                "content": f"""Evaluate the user's answers against the correct answers.
 
 Questions:
 {json.dumps(questions, ensure_ascii=False)}
 
-User Answers:
-{json.dumps(answers, ensure_ascii=False)}
+Correct Answers:
+{json.dumps(correct_answers, ensure_ascii=False)}
 
-Return the JSON object described by the system prompt and nothing else."""
+User Answers:
+{json.dumps(user_answers, ensure_ascii=False)}
+
+Return ONLY the JSON object described by the system prompt."""
             }
         ],
         response_format={"type": "json_object"}

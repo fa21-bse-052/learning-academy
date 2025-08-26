@@ -3,99 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronRight, Clock, Award, BookOpen, CheckCircle, XCircle, RotateCcw, Play, Trophy, Target, Brain } from 'lucide-react';
 
-const sampleQuizzes = [
-  {
-    id: 1,
-    title: "JavaScript Fundamentals",
-    description: "Test your knowledge of JavaScript basics and ES6 features",
-    difficulty: "Beginner",
-    questions: 10,
-    duration: 15,
-    category: "Programming",
-    color: "from-blue-500 to-purple-600",
-    icon: Brain,
-    questions_data: [
-      {
-        question: "What is the correct way to declare a variable in JavaScript?",
-        options: ["var myVar;", "variable myVar;", "declare myVar;", "v myVar;"],
-        correct: 0
-      },
-      {
-        question: "Which method is used to add an element to the end of an array?",
-        options: ["append()", "push()", "add()", "insert()"],
-        correct: 1
-      },
-      {
-        question: "What does '===' operator do in JavaScript?",
-        options: ["Assigns value", "Compares value only", "Compares value and type", "Compares type only"],
-        correct: 2
-      },
-      {
-        question: "Which of the following is NOT a JavaScript data type?",
-        options: ["String", "Boolean", "Integer", "Undefined"],
-        correct: 2
-      },
-      {
-        question: "How do you create a function in JavaScript?",
-        options: ["function myFunction() {}", "create myFunction() {}", "def myFunction() {}", "func myFunction() {}"],
-        correct: 0
-      }
-    ]
-  },
-  {
-    id: 2,
-    title: "React Essentials",
-    description: "Master the core concepts of React development",
-    difficulty: "Intermediate",
-    questions: 12,
-    duration: 20,
-    category: "Frontend",
-    color: "from-green-500 to-teal-600",
-    icon: Target,
-    questions_data: [
-      {
-        question: "What is JSX in React?",
-        options: ["A JavaScript library", "A syntax extension for JavaScript", "A CSS framework", "A testing tool"],
-        correct: 1
-      },
-      {
-        question: "Which hook is used to manage state in functional components?",
-        options: ["useEffect", "useState", "useContext", "useReducer"],
-        correct: 1
-      },
-      {
-        question: "What is the purpose of useEffect hook?",
-        options: ["To manage state", "To handle side effects", "To create components", "To style components"],
-        correct: 1
-      }
-    ]
-  },
-  {
-    id: 3,
-    title: "Web Security Basics",
-    description: "Learn fundamental web security principles and best practices",
-    difficulty: "Advanced",
-    questions: 15,
-    duration: 25,
-    category: "Security",
-    color: "from-red-500 to-pink-600",
-    icon: Trophy,
-    questions_data: [
-      {
-        question: "What does HTTPS stand for?",
-        options: ["HyperText Transfer Protocol Secure", "HyperText Transport Protocol Secure", "HyperText Transfer Process Secure", "HyperText Transmission Protocol Secure"],
-        correct: 0
-      },
-      {
-        question: "Which of the following is a common type of cyber attack?",
-        options: ["SQL Injection", "CSS Styling", "HTML Parsing", "JSON Formatting"],
-        correct: 0
-      }
-    ]
-  }
-];
-
 export default function QuizPage() {
+  const [quizzes, setQuizzes] = useState([]);
   const [currentView, setCurrentView] = useState('dashboard'); // dashboard, quiz, results
   const [selectedQuiz, setSelectedQuiz] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -104,6 +13,23 @@ export default function QuizPage() {
   const [quizStarted, setQuizStarted] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [score, setScore] = useState(0);
+  const [checkResult, setCheckResult] = useState(null);
+
+  // Fetch available quizzes from backend
+  useEffect(() => {
+    fetch('http://localhost:8000/api/quizzes')
+      .then(res => {
+        if (!res.ok) {
+          throw new Error("Failed to fetch quizzes");
+        }
+        return res.json();
+      })
+      .then(data => {
+        // data.quizzes contains the array of quizzes with course names
+        setQuizzes(data.quizzes);
+      })
+      .catch(err => console.error("Error fetching quizzes:", err));
+  }, []);
 
   // Timer effect
   useEffect(() => {
@@ -126,6 +52,7 @@ export default function QuizPage() {
     setSelectedQuiz(quiz);
     setCurrentQuestion(0);
     setAnswers({});
+    // Assume quiz.duration is provided in minutes; adjust if necessary:
     setTimeLeft(quiz.duration * 60);
     setQuizStarted(true);
     setShowResults(false);
@@ -153,15 +80,35 @@ export default function QuizPage() {
     }
   };
 
-  const handleQuizComplete = () => {
-    let correctAnswers = 0;
-    selectedQuiz.questions_data.forEach((q, index) => {
-      if (answers[index] === q.correct) {
-        correctAnswers++;
+  // When quiz is complete, call the backend /check-quiz endpoint
+  const handleQuizComplete = async () => {
+    // Build an array of answers ordered by question index
+    const answersArray = [];
+    for (let i = 0; i < selectedQuiz.questions_data.length; i++) {
+      answersArray.push(answers[i] !== undefined ? answers[i] : null);
+    }
+    const answersJSON = JSON.stringify(answersArray);
+    try {
+      const res = await fetch(`http://localhost:8000/api/check-quiz?video_id=${selectedQuiz.video_id}&answers=${encodeURIComponent(answersJSON)}`);
+      if (!res.ok) {
+        throw new Error("Failed to check quiz");
       }
-    });
-    setScore(correctAnswers);
-    setShowResults(true);
+      const data = await res.json();
+      setScore(data.marks);
+      setCheckResult(data);
+      setShowResults(true);
+    } catch (err) {
+      console.error("Error checking quiz:", err);
+      // Fall back to local scoring if needed.
+      let correctAnswers = 0;
+      selectedQuiz.questions_data.forEach((q, index) => {
+        if (answers[index] === q.correct) {
+          correctAnswers++;
+        }
+      });
+      setScore(correctAnswers);
+      setShowResults(true);
+    }
     setQuizStarted(false);
   };
 
@@ -174,6 +121,7 @@ export default function QuizPage() {
     setQuizStarted(false);
     setShowResults(false);
     setScore(0);
+    setCheckResult(null);
   };
 
   const formatTime = (seconds) => {
@@ -191,6 +139,7 @@ export default function QuizPage() {
     }
   };
 
+  // Quiz view
   if (currentView === 'quiz' && !showResults) {
     const currentQ = selectedQuiz.questions_data[currentQuestion];
     const progress = ((currentQuestion + 1) / selectedQuiz.questions_data.length) * 100;
@@ -201,7 +150,7 @@ export default function QuizPage() {
           {/* Quiz Header */}
           <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 mb-8">
             <div className="flex justify-between items-center mb-4">
-              <h1 className="text-2xl font-bold text-gray-900">{selectedQuiz.title}</h1>
+              <h1 className="text-2xl font-bold text-gray-900">{selectedQuiz.course_title}</h1>
               <div className="flex items-center space-x-4">
                 <div className="flex items-center text-gray-700">
                   <Clock className="w-5 h-5 mr-2 text-blue-600" />
@@ -245,7 +194,7 @@ export default function QuizPage() {
                   className={`w-full p-5 text-left rounded-xl border-2 transition-all duration-300 transform hover:scale-[1.02] ${
                     answers[currentQuestion] === index
                       ? 'border-blue-600 bg-blue-50 text-blue-800 shadow-md'
-                      : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 hover:shadow-md'
+                      : 'border-gray-200 bg-gray-100 text-gray-900 hover:border-blue-300 hover:bg-blue-50/50 hover:shadow-md'
                   }`}
                 >
                   <div className="flex items-center">
@@ -289,7 +238,10 @@ export default function QuizPage() {
   }
 
   if (showResults) {
-    const percentage = Math.round((score / selectedQuiz.questions_data.length) * 100);
+    // Use API response if available; otherwise, fall back to local score calculation.
+    const evaluation = checkResult?.result?.quiz_evaluation || {};
+    const marks = evaluation.marks || score;
+    const percentage = evaluation.percentage || Math.round((marks / selectedQuiz.questions_data.length) * 100);
     const passed = percentage >= 70;
 
     return (
@@ -317,18 +269,18 @@ export default function QuizPage() {
             </div>
             
             <p className="text-xl text-gray-600 mb-8">
-              You got {score} out of {selectedQuiz.questions_data.length} questions correct
+              You got {marks} out of {selectedQuiz.questions_data.length} questions correct
             </p>
             
             <div className="bg-gray-50 rounded-2xl p-6 mb-8">
               <div className="grid grid-cols-2 gap-4 text-center">
                 <div>
-                  <div className="text-2xl font-bold text-gray-800">{score}</div>
+                  <div className="text-2xl font-bold text-gray-800">{marks}</div>
                   <div className="text-gray-600">Correct</div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-gray-800">
-                    {selectedQuiz.questions_data.length - score}
+                    {selectedQuiz.questions_data.length - marks}
                   </div>
                   <div className="text-gray-600">Incorrect</div>
                 </div>
@@ -356,12 +308,12 @@ export default function QuizPage() {
     );
   }
 
+  // Dashboard view showing available quizzes
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
       <div className="container mx-auto px-4 py-12">
         {/* Hero Section */}
         <div className="text-center mb-16">
-      
           <h1 className="text-6xl font-bold text-gray-900 mb-4 tracking-tight">
             Learning Academy
             <span className="block text-4xl font-semibold text-blue-600 mt-3">Quiz Center</span>
@@ -377,7 +329,7 @@ export default function QuizPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 text-sm font-semibold uppercase tracking-wide mb-2">Available Quizzes</p>
-                <p className="text-4xl font-bold text-gray-900">{sampleQuizzes.length}</p>
+                <p className="text-4xl font-bold text-gray-900">{quizzes.length}</p>
               </div>
               <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center">
                 <BookOpen className="w-8 h-8 text-blue-600" />
@@ -390,7 +342,9 @@ export default function QuizPage() {
               <div>
                 <p className="text-gray-600 text-sm font-semibold uppercase tracking-wide mb-2">Total Questions</p>
                 <p className="text-4xl font-bold text-gray-900">
-                  {sampleQuizzes.reduce((acc, quiz) => acc + quiz.questions, 0)}
+                  {quizzes.reduce((acc, quiz) => {
+                    return quiz.quiz ? acc + quiz.quiz.length : acc;
+                  }, 0)}
                 </p>
               </div>
               <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center">
@@ -414,35 +368,33 @@ export default function QuizPage() {
 
         {/* Quiz Cards */}
         <div className="grid lg:grid-cols-3 md:grid-cols-2 gap-8 mb-16">
-          {sampleQuizzes.map((quiz) => {
-            const IconComponent = quiz.icon;
+          {quizzes.map((quiz) => {
+            // Assume the backend returns quiz data with a `quiz` field (array of questions)
+            const mergedQuiz = {
+              ...quiz,
+              questions_data: quiz.quiz, // backend returns full quiz data here
+            };
             return (
-              <div key={quiz.id} className="group">
+              <div key={quiz.video_id} className="group">
                 <div className="bg-white rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 overflow-hidden h-full border border-gray-100">
-                  <div className={`h-40 bg-gradient-to-r ${quiz.color} p-8 flex items-center justify-between relative overflow-hidden`}>
+                  <div className={`h-40 bg-gradient-to-r from-blue-900 to-indigo-900 p-8 flex items-center justify-between relative overflow-hidden`}>
                     <div className="absolute inset-0 bg-black/10"></div>
                     <div className="relative z-10">
                       <span className="inline-block px-4 py-2 bg-white/20 backdrop-blur-sm text-white text-sm rounded-full mb-3 font-medium">
-                        {quiz.category}
+                        {quiz.course_title}
                       </span>
-                      <h3 className="text-2xl font-bold text-white leading-tight">{quiz.title}</h3>
+                      <h3 className="text-2xl font-bold text-white leading-tight">{quiz.course_title}</h3>
                     </div>
-                    <IconComponent className="w-16 h-16 text-white/60 relative z-10" />
+                    <Brain className="w-16 h-16 text-white/60 relative z-10" />
                   </div>
                   
                   <div className="p-8">
-                    <p className="text-gray-600 mb-8 line-clamp-2 text-lg leading-relaxed">{quiz.description}</p>
+                    <p className="text-gray-600 mb-8 line-clamp-2 text-lg leading-relaxed">Quiz for {quiz.course_title}</p>
                     
                     <div className="space-y-4 mb-8">
                       <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                        <span className="text-gray-700 font-medium">Difficulty</span>
-                        <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getDifficultyColor(quiz.difficulty)}`}>
-                          {quiz.difficulty}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
                         <span className="text-gray-700 font-medium">Questions</span>
-                        <span className="font-bold text-gray-900 text-lg">{quiz.questions}</span>
+                        <span className="font-bold text-gray-900 text-lg">{mergedQuiz.questions_data.length}</span>
                       </div>
                       <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
                         <span className="text-gray-700 font-medium">Duration</span>
@@ -451,8 +403,8 @@ export default function QuizPage() {
                     </div>
                     
                     <button
-                      onClick={() => startQuiz(quiz)}
-                      className={`w-full bg-gradient-to-r ${quiz.color} text-white py-4 rounded-xl hover:shadow-lg transition-all duration-300 flex items-center justify-center group-hover:scale-105 font-semibold text-lg shadow-md`}
+                      onClick={() => startQuiz(mergedQuiz)}
+                      className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:shadow-lg transition-all duration-300 flex items-center justify-center group-hover:scale-105 font-semibold text-lg shadow-md text-white py-4 rounded-xl"
                     >
                       <Play className="w-5 h-5 mr-2" />
                       Start Quiz
@@ -464,21 +416,6 @@ export default function QuizPage() {
           })}
         </div>
 
-        {/* Call to Action */}
-        <div className="text-center">
-          <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-12 max-w-4xl mx-auto">
-            <div className="w-20 h-20 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-xl">
-              <Award className="w-10 h-10 text-white" />
-            </div>
-            <h2 className="text-4xl font-bold text-gray-900 mb-6">Ready to Get Certified?</h2>
-            <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed">
-              Complete quizzes with 70% or higher scores to earn your certification and showcase your expertise to the world.
-            </p>
-            <button className="px-12 py-4 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-xl hover:from-yellow-600 hover:to-orange-600 transition-all duration-300 font-semibold text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1">
-              View Certifications
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );
