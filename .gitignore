@@ -1,0 +1,103 @@
+# ======================
+# Global ignores
+# ======================
+.DS_Store
+*.swp
+*.swo
+*.log
+*.tmp
+*.bak
+*.cache
+*.env.local
+*.env.*.local
+.env
+
+# ======================
+# Python / FastAPI backend
+# ======================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv
+venv/
+ENV/
+env/
+.venv*/
+pip-wheel-metadata/
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# IDE / editor
+.vscode/
+.idea/
+*.iml
+
+# FastAPI / Uvicorn logs
+*.db
+*.sqlite3
+*.log
+logs/
+
+# ======================
+# Node.js / Next.js frontend
+# ======================
+
+# Node dependencies
+node_modules/
+
+# Build outputs
+.next/
+out/
+build/
+
+# Debug / logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Local environment overrides
+.next/cache/
+*.local
+
+# Coverage
+coverage/
+
+# Misc
+*.tsbuildinfo
+*.tgz
